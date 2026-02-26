@@ -219,6 +219,14 @@ if (process.env.CF_AI_GATEWAY_MODEL) {
     }
 }
 
+// OpenAI provider: register API key in config so OpenClaw activates the provider
+// This makes OpenAI models (e.g. openai/gpt-5.1-codex) available alongside Anthropic
+if (process.env.OPENAI_API_KEY) {
+    config.env = config.env || {};
+    config.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    console.log('OpenAI provider activated via OPENAI_API_KEY');
+}
+
 // Telegram configuration
 // Overwrite entire channel object to drop stale keys from old R2 backups
 // that would fail OpenClaw's strict config validation (see #47)

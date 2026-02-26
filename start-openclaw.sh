@@ -169,6 +169,11 @@ if (process.env.OPENCLAW_DEV_MODE === 'true') {
     config.gateway.controlUi.allowInsecureAuth = true;
 }
 
+// Control UI origin policy (required since OpenClaw 2026.2.23+ for --bind lan)
+// Use Host-header fallback since the worker is behind Cloudflare Access (CSRF-safe)
+config.gateway.controlUi = config.gateway.controlUi || {};
+config.gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true;
+
 // Legacy AI Gateway base URL override:
 // ANTHROPIC_BASE_URL is picked up natively by the Anthropic SDK,
 // so we don't need to patch the provider config. Writing a provider

@@ -121,6 +121,16 @@ describe('buildEnvVars', () => {
     expect(result.SLACK_APP_TOKEN).toBe('slack-app');
   });
 
+  it('includes TELEGRAM_DM_ALLOW_FROM when set', () => {
+    const env = createMockEnv({
+      TELEGRAM_BOT_TOKEN: 'tg-token',
+      TELEGRAM_DM_POLICY: 'pairing',
+      TELEGRAM_DM_ALLOW_FROM: '2057057646,123456789',
+    });
+    const result = buildEnvVars(env);
+    expect(result.TELEGRAM_DM_ALLOW_FROM).toBe('2057057646,123456789');
+  });
+
   it('maps DEV_MODE to OPENCLAW_DEV_MODE for container', () => {
     const env = createMockEnv({
       DEV_MODE: 'true',
@@ -142,6 +152,24 @@ describe('buildEnvVars', () => {
     const env = createMockEnv({ CF_ACCOUNT_ID: 'acct-123' });
     const result = buildEnvVars(env);
     expect(result.CF_ACCOUNT_ID).toBe('acct-123');
+  });
+
+  // Multi-agent config
+  it('passes OPENCLAW_AGENTS_JSON to container', () => {
+    const agentsJson = JSON.stringify({
+      list: [
+        { id: 'main', workspace: '/root/clawd/workspace-main' },
+        { id: 'francisco', workspace: '/root/clawd/workspace-francisco' },
+      ],
+      agentToAgent: { enabled: true, allow: ['main', 'francisco'] },
+      bindings: [
+        { agentId: 'main', match: { channel: 'telegram', chatId: '2057057646' } },
+        { agentId: 'francisco', match: { channel: 'telegram', chatId: '7320283699' } },
+      ],
+    });
+    const env = createMockEnv({ OPENCLAW_AGENTS_JSON: agentsJson });
+    const result = buildEnvVars(env);
+    expect(result.OPENCLAW_AGENTS_JSON).toBe(agentsJson);
   });
 
   it('combines all env vars correctly', () => {

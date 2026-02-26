@@ -273,6 +273,40 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
     };
 }
 
+// Multi-agent configuration via OPENCLAW_AGENTS_JSON
+// Expects JSON: { list: [{id, workspace}], agentToAgent: {enabled, allow}, bindings: [{agentId, match}] }
+if (process.env.OPENCLAW_AGENTS_JSON) {
+    try {
+        const agentsCfg = JSON.parse(process.env.OPENCLAW_AGENTS_JSON);
+        config.agents = config.agents || {};
+
+        // Set agent list (preserves agents.defaults from AI Gateway model override)
+        if (agentsCfg.list) {
+            config.agents.list = agentsCfg.list;
+            // Create workspace directories for each agent
+            for (const agent of agentsCfg.list) {
+                if (agent.workspace) {
+                    fs.mkdirSync(agent.workspace, { recursive: true });
+                }
+            }
+            console.log('Multi-agent config loaded: ' + agentsCfg.list.map(a => a.id).join(', '));
+        }
+
+        // Enable agent-to-agent communication (sessions_send tool)
+        if (agentsCfg.agentToAgent) {
+            config.tools = config.tools || {};
+            config.tools.agentToAgent = agentsCfg.agentToAgent;
+        }
+
+        // Channel-to-agent bindings (route Telegram users to specific agents)
+        if (agentsCfg.bindings) {
+            config.bindings = agentsCfg.bindings;
+        }
+    } catch (e) {
+        console.error('Failed to parse OPENCLAW_AGENTS_JSON:', e.message);
+    }
+}
+
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 console.log('Configuration patched successfully');
 EOFPATCH
